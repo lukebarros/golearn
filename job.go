@@ -17,14 +17,23 @@ const (
 
 // Job represents a unit of work
 type Job struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Payload   string    `json:"payload"`
-	Status    JobStatus `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
-	StartedAt time.Time `json:"started_at"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Payload     string    `json:"payload"`
+	Status      JobStatus `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+	StartedAt   time.Time `json:"started_at"`
 	CompletedAt time.Time `json:"completed_at"`
-	Error     string    `json:"error,omitempty"`
+	Error       string    `json:"error,omitempty"`
+}
+
+// JobStats represents aggregated statistics about jobs
+type JobStats struct {
+	TotalJobs     int
+	PendingJobs   int
+	RunningJobs   int
+	CompletedJobs int
+	FailedJobs    int
 }
 
 // Validate checks if the job has valid required fields

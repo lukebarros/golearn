@@ -35,6 +35,12 @@ func main() {
 		handleStatus(runner, os.Args[2:])
 	case "list":
 		handleList(runner)
+	case "execute":
+		handleExecute(runner, os.Args[2:])
+	case "delete":
+		handleDelete(runner, os.Args[2:])
+	case "stats":
+		handleStats(runner)
 	case "help":
 		printUsage()
 	default:
@@ -130,10 +136,55 @@ func printJobDetails(job *Job) {
 	fmt.Println()
 }
 
+// handleExecute processes the "execute" command
+func handleExecute(runner *JobRunner, args []string) {
+	if len(args) == 0 {
+		fmt.Println("Error: job ID required")
+		fmt.Println("Usage: execute <job-id>")
+		os.Exit(1)
+	}
+
+	jobID := args[0]
+	if err := runner.ExecuteJob(jobID); err != nil {
+		log.Fatalf("Failed to execute job: %v", err)
+	}
+
+	job, _ := runner.GetStatus(jobID)
+	fmt.Printf("✓ Job executed: %s (Status: %s)\n", jobID, job.Status)
+}
+
+// handleDelete processes the "delete" command
+func handleDelete(runner *JobRunner, args []string) {
+	if len(args) == 0 {
+		fmt.Println("Error: job ID required")
+		fmt.Println("Usage: delete <job-id>")
+		os.Exit(1)
+	}
+
+	jobID := args[0]
+	if err := runner.DeleteJob(jobID); err != nil {
+		log.Fatalf("Failed to delete job: %v", err)
+	}
+
+	fmt.Printf("✓ Job deleted: %s\n", jobID)
+}
+
+// handleStats processes the "stats" command
+func handleStats(runner *JobRunner) {
+	stats := runner.GetStats()
+	fmt.Println("\n=== Job Statistics ===")
+	fmt.Printf("Total Jobs:      %d\n", stats.TotalJobs)
+	fmt.Printf("Pending:         %d\n", stats.PendingJobs)
+	fmt.Printf("Running:         %d\n", stats.RunningJobs)
+	fmt.Printf("Completed:       %d\n", stats.CompletedJobs)
+	fmt.Printf("Failed:          %d\n", stats.FailedJobs)
+	fmt.Println()
+}
+
 // printUsage displays the help text
 func printUsage() {
 	fmt.Println(`
-GoLearn - Job Runner Learning Project
+GoLearn - Job Runner Learning Project (Day 2)
 Usage: golearn <command> [options]
 
 Commands:
@@ -146,6 +197,15 @@ Commands:
   list
     List all jobs
     
+  execute <job-id>
+    Execute a job (synchronously)
+    
+  delete <job-id>
+    Delete a job
+    
+  stats
+    Show job statistics
+
   interactive
     Run in interactive mode (for quick testing)
 
@@ -153,9 +213,11 @@ Commands:
     Show this help message
 
 Examples:
-  golearn submit -id job1 -name "Process Data" -payload "data.csv"
-  golearn status job1
+  golearn submit -id job1 -name "Process" -payload "data.csv"
   golearn list
+  golearn execute job1
+  golearn stats
+  golearn delete job1
   golearn interactive
 `)
 }
@@ -189,6 +251,12 @@ func runInteractiveMode(runner *JobRunner) {
 			handleStatus(runner, parts[1:])
 		case "list":
 			handleList(runner)
+		case "execute":
+			handleExecute(runner, parts[1:])
+		case "delete":
+			handleDelete(runner, parts[1:])
+		case "stats":
+			handleStats(runner)
 		case "help":
 			printInteractiveHelp()
 		default:
@@ -204,13 +272,19 @@ func printInteractiveHelp() {
 Interactive Commands:
   submit -id <id> -name <name> [-payload <payload>]  - Submit a job
   status <job-id>                                      - Check job status
+  execute <job-id>                                     - Run a job
+  delete <job-id>                                      - Delete a job
   list                                                 - List all jobs
+  stats                                                - Show statistics
   help                                                 - Show this help
   quit                                                 - Exit
   
-Example:
+Learning Goal: Observe how pointer receivers are necessary for mutations
+Example session:
   > submit -id job1 -name "My Task" -payload "data.csv"
   > list
+  > execute job1
+  > stats
   > status job1
 `)
 }
