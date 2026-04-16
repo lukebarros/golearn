@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"text/tabwriter"
 	"time"
 )
 
@@ -117,13 +118,15 @@ func handleList(runner *JobRunner) {
 	}
 
 	fmt.Println("\n=== Job List ===")
-	fmt.Printf("%-20s | %-20s | %-15s | %-10s\n", "ID", "Name", "Status", "Created")
-	fmt.Println(strings.Repeat("-", 75))
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintf(w, "ID\tName\tStatus\tCreated\n")
+	fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", strings.Repeat("-", 15), strings.Repeat("-", 25), strings.Repeat("-", 12), strings.Repeat("-", 16))
 
 	for _, job := range jobs {
 		createdStr := job.CreatedAt.Format("2006-01-02 15:04")
-		fmt.Printf("%-20s | %-20s | %-15s | %-10s\n", job.ID, job.Name, job.Status, createdStr)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", job.ID, job.Name, job.Status, createdStr)
 	}
+	w.Flush()
 }
 
 // printJobDetails prints detailed information about a job
