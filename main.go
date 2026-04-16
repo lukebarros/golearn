@@ -10,9 +10,16 @@ import (
 	"time"
 )
 
+const jobsFile = "jobs.json"
+
 func main() {
 	// Create a new job runner
 	runner := NewJobRunner()
+
+	// Load existing jobs from file
+	if err := LoadJobsFromFile(runner, jobsFile); err != nil {
+		log.Fatalf("Failed to load jobs from file: %v", err)
+	}
 
 	// Check for interactive mode
 	if len(os.Args) > 1 && os.Args[1] == "interactive" {
@@ -74,6 +81,11 @@ func handleSubmit(runner *JobRunner, args []string) {
 
 	if err := runner.Submit(job); err != nil {
 		log.Fatalf("Failed to submit job: %v", err)
+	}
+
+	// Save jobs to file after successful submission
+	if err := SaveJobsToFile(runner, jobsFile); err != nil {
+		log.Fatalf("Failed to save jobs to file: %v", err)
 	}
 
 	fmt.Printf("✓ Job submitted: ID=%s, Name=%s\n", job.ID, job.Name)
@@ -149,6 +161,11 @@ func handleExecute(runner *JobRunner, args []string) {
 		log.Fatalf("Failed to execute job: %v", err)
 	}
 
+	// Save jobs to file after execution
+	if err := SaveJobsToFile(runner, jobsFile); err != nil {
+		log.Fatalf("Failed to save jobs to file: %v", err)
+	}
+
 	job, _ := runner.GetStatus(jobID)
 	fmt.Printf("✓ Job executed: %s (Status: %s)\n", jobID, job.Status)
 }
@@ -164,6 +181,11 @@ func handleDelete(runner *JobRunner, args []string) {
 	jobID := args[0]
 	if err := runner.DeleteJob(jobID); err != nil {
 		log.Fatalf("Failed to delete job: %v", err)
+	}
+
+	// Save jobs to file after deletion
+	if err := SaveJobsToFile(runner, jobsFile); err != nil {
+		log.Fatalf("Failed to save jobs to file: %v", err)
 	}
 
 	fmt.Printf("✓ Job deleted: %s\n", jobID)
@@ -222,6 +244,40 @@ Examples:
 `)
 }
 
+// parseArgs splits a command line respecting quoted strings
+// Example: `submit -id job1 -name "My Task"`
+// Returns: []string{"submit", "-id", "job1", "-name", "My Task"}
+func parseArgs(input string) []string {
+	var args []string
+	var current strings.Builder
+	inQuotes := false
+
+	for i := 0; i < len(input); i++ {
+		ch := input[i]
+
+		if ch == '"' {
+			inQuotes = !inQuotes
+			continue // Don't include the quote character itself
+		}
+
+		if ch == ' ' && !inQuotes {
+			if current.Len() > 0 {
+				args = append(args, current.String())
+				current.Reset()
+			}
+			continue
+		}
+
+		current.WriteByte(ch)
+	}
+
+	if current.Len() > 0 {
+		args = append(args, current.String())
+	}
+
+	return args
+}
+
 // runInteractiveMode allows multiple commands in a single session
 func runInteractiveMode(runner *JobRunner) {
 	reader := bufio.NewReader(os.Stdin)
@@ -238,7 +294,10 @@ func runInteractiveMode(runner *JobRunner) {
 			continue
 		}
 
-		parts := strings.Fields(input)
+		parts := parseArgs(input)
+		if len(parts) == 0 {
+			continue
+		}
 		command := parts[0]
 
 		switch command {

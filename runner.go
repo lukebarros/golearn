@@ -18,8 +18,8 @@ func NewJobRunner() *JobRunner {
 	}
 }
 
-// Submit adds a job to the runner
-// For now (Day 1), jobs are stored but not executed
+// Submit adds a new job to the runner
+// This method is for NEW jobs—it validates and sets initial status to pending
 func (jr *JobRunner) Submit(job *Job) error {
 	// Validate the job before accepting it
 	if err := job.Validate(); err != nil {
@@ -34,8 +34,30 @@ func (jr *JobRunner) Submit(job *Job) error {
 		return fmt.Errorf("job with ID %s already exists", job.ID)
 	}
 
-	// Set initial status
+	// Set initial status for NEW jobs only
 	job.Status = StatusPending
+	jr.jobs[job.ID] = job
+
+	return nil
+}
+
+// AddJob adds an existing job to the runner without modifying its status
+// This is used when loading jobs from persistence (they may already be completed/failed)
+func (jr *JobRunner) AddJob(job *Job) error {
+	// Validate the job before accepting it
+	if err := job.Validate(); err != nil {
+		return fmt.Errorf("invalid job: %w", err)
+	}
+
+	jr.mu.Lock()
+	defer jr.mu.Unlock()
+
+	// Check if job ID already exists
+	if _, exists := jr.jobs[job.ID]; exists {
+		return fmt.Errorf("job with ID %s already exists", job.ID)
+	}
+
+	// Add the job AS-IS (preserves status from persistence)
 	jr.jobs[job.ID] = job
 
 	return nil

@@ -44,9 +44,9 @@ func LoadJobsFromFile(runner *JobRunner, filename string) error {
 		return fmt.Errorf("failed to unmarshal jobs: %w", err)
 	}
 
-	// Add all loaded jobs to the runner
+	// Add all loaded jobs to the runner (use AddJob to preserve their state)
 	for _, job := range jobs {
-		if err := runner.Submit(job); err != nil {
+		if err := runner.AddJob(job); err != nil {
 			// Note: We might want to handle conflicts (job already exists)
 			// This will be discussed in Day 3-4
 			return fmt.Errorf("failed to load job %s: %w", job.ID, err)
