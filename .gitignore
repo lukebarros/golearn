@@ -1,0 +1,41 @@
+# Binaries and executables
+*.exe
+*.dll
+*.so
+*.dylib
+*.out
+
+# Build directories
+/bin/
+/dist/
+/build/
+
+# Go-specific
+go.sum
+vendor/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Test coverage
+*.coverprofile
+coverage.out
+
+# Temporary files
+*.tmp
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# Persistence files
+*.db
+*.sqlite
+*.json
